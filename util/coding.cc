@@ -44,14 +44,31 @@ void PutFixed64(std::string* dst, uint64_t value) {
   dst->append(buf, sizeof(buf));
 }
 
+/* 将v进行varint编码，可以缩小传输时的大小
+ * 例如： 对1000进行编码
+ * 1000的二进制为 11 1110 1000
+ * 取右边7bit 110 1000
+ * 小端字节序要转换位置，则
+ * 字节1：0110 1000
+ * 字节2：0000 0111
+ * 字节1的最高位要标记为1，因为还有后续，字节2的最高位为0
+ * 则最后的编码为 1110 1000 0000 0111
+ *
+ * 32位最多用5个字节，因为每个字节只有7个bit用于存储数据，所以
+ * 数据较大时，可能会用到5个字节
+ * 最后返回的ptr，是指向最后一个字节的，也就是高字节。
+ */
 char* EncodeVarint32(char* dst, uint32_t v) {
   // Operate on characters as unsigneds
+  //将char *转换为unsigned char *进行操作
+  //因为有符号char的最大值为0x7f，所以我们需要一个无符号的char
+  //因为对usigned char赋值时，超出0xff会自动截断，所以v | B的话会直接截取8位
   unsigned char* ptr = reinterpret_cast<unsigned char*>(dst);
   static const int B = 128;
   if (v < (1<<7)) {
     *(ptr++) = v;
   } else if (v < (1<<14)) {
-    *(ptr++) = v | B;
+    *(ptr++) = v | B;       //从低字节进行处理，与1000 0000相与，刚好可以保证高位为1，代表有后续。
     *(ptr++) = v>>7;
   } else if (v < (1<<21)) {
     *(ptr++) = v | B;
@@ -78,6 +95,7 @@ void PutVarint32(std::string* dst, uint32_t v) {
   dst->append(buf, ptr - buf);
 }
 
+//64位的运算和32位的逻辑是一样的，所以直接循环
 char* EncodeVarint64(char* dst, uint64_t v) {
   static const int B = 128;
   unsigned char* ptr = reinterpret_cast<unsigned char*>(dst);

@@ -35,8 +35,10 @@
 
 namespace leveldb {
 
+//内存池
 class Arena;
 
+//跳跃表模板，是实现memtable的核心数据结构
 template<typename Key, class Comparator>
 class SkipList {
  private:
@@ -46,10 +48,12 @@ class SkipList {
   // Create a new SkipList object that will use "cmp" for comparing keys,
   // and will allocate memory using "*arena".  Objects allocated in the arena
   // must remain allocated for the lifetime of the skiplist object.
+  // 在arena中被分配的对象在skiplist的生命周期内不能被释放，在arena的生命周期结束时，统一被释放
   explicit SkipList(Comparator cmp, Arena* arena);
 
   // Insert key into the list.
   // REQUIRES: nothing that compares equal to key is currently in the list.
+  // 要求list中没有相同的键
   void Insert(const Key& key);
 
   // Returns true iff an entry that compares equal to key is in the list.
@@ -60,6 +64,7 @@ class SkipList {
    public:
     // Initialize an iterator over the specified list.
     // The returned iterator is not valid.
+    // 初始化一个超出指定列表的迭代器时，返回的迭代器是无效的
     explicit Iterator(const SkipList* list);
 
     // Returns true iff the iterator is positioned at a valid node.
@@ -78,6 +83,7 @@ class SkipList {
     void Prev();
 
     // Advance to the first entry with a key >= target
+    // 跳到第一个key >= target的条目
     void Seek(const Key& target);
 
     // Position at the first entry in list.
@@ -95,9 +101,11 @@ class SkipList {
   };
 
  private:
+  //跳跃表的最高高度
   enum { kMaxHeight = 12 };
 
   // Immutable after construction
+  //比较器
   Comparator const compare_;
   Arena* const arena_;    // Arena used for allocations of nodes
 
@@ -113,6 +121,7 @@ class SkipList {
   }
 
   // Read/written only by Insert().
+  //产生随机值
   Random rnd_;
 
   Node* NewNode(const Key& key, int height);
@@ -120,9 +129,11 @@ class SkipList {
   bool Equal(const Key& a, const Key& b) const { return (compare_(a, b) == 0); }
 
   // Return true if key is greater than the data stored in "n"
+  //判断key是否大于n中的数据
   bool KeyIsAfterNode(const Key& key, Node* n) const;
 
   // Return the earliest node that comes at or after key.
+  //返回key值之后的第一个节点
   // Return NULL if there is no such node.
   //
   // If prev is non-NULL, fills prev[level] with pointer to previous
@@ -180,7 +191,7 @@ struct SkipList<Key,Comparator>::Node {
 };
 
 template<typename Key, class Comparator>
-typename SkipList<Key,Comparator>::Node*
+typename SkipList<Key,Comparator>::Node*        //返回值类型
 SkipList<Key,Comparator>::NewNode(const Key& key, int height) {
   char* mem = arena_->AllocateAligned(
       sizeof(Node) + sizeof(port::AtomicPointer) * (height - 1));

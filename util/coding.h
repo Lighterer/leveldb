@@ -43,12 +43,15 @@ extern int VarintLength(uint64_t v);
 
 // Lower-level versions of Put... that write directly into a character buffer
 // REQUIRES: dst has enough space for the value being written
+//固定字节的编码，传输时将数据转换为字节发送
 extern void EncodeFixed32(char* dst, uint32_t value);
 extern void EncodeFixed64(char* dst, uint64_t value);
 
 // Lower-level versions of Put... that write directly into a character buffer
 // and return a pointer just past the last byte written.
 // REQUIRES: dst has enough space for the value being written
+//可变字节的编码
+//直接写入字符缓冲区，返回一个最后写入的字节的指针，因为是little-endian，所以返回的指针应该指向高字节
 extern char* EncodeVarint32(char* dst, uint32_t value);
 extern char* EncodeVarint64(char* dst, uint64_t value);
 
@@ -86,6 +89,7 @@ inline uint64_t DecodeFixed64(const char* ptr) {
 extern const char* GetVarint32PtrFallback(const char* p,
                                           const char* limit,
                                           uint32_t* value);
+//32位varint的解码，依次读取1byte，直到最高位为0的byte结束，取低7位bit，取完后作（<<7）操作组成int
 inline const char* GetVarint32Ptr(const char* p,
                                   const char* limit,
                                   uint32_t* value) {

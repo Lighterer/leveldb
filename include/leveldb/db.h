@@ -66,6 +66,7 @@ class DB {
   // success, and a non-OK status on error.  It is not an error if "key"
   // did not exist in the database.
   // Note: consider setting options.sync = true.
+  // 删除操作也是插入操作，只是标记key为删除状态，真正的删除要到Compaction的时候才去做真正的操作
   virtual Status Delete(const WriteOptions& options, const Slice& key) = 0;
 
   // Apply the specified updates to the database.
@@ -144,6 +145,7 @@ class DB {
 
  private:
   // No copying allowed
+  // 将拷贝构造函数和拷贝复制运算符设置为private以禁止拷贝和复制操作
   DB(const DB&);
   void operator=(const DB&);
 };
