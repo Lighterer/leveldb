@@ -62,7 +62,7 @@ char* EncodeVarint32(char* dst, uint32_t v) {
   // Operate on characters as unsigneds
   //将char *转换为unsigned char *进行操作
   //因为有符号char的最大值为0x7f，所以我们需要一个无符号的char
-  //因为对usigned char赋值时，超出0xff会自动截断，所以v | B的话会直接截取8位
+  //因为对usigned char赋值时，超出0xff会自动截断，所以v | B的话会直接截取8位，截取低八位
   unsigned char* ptr = reinterpret_cast<unsigned char*>(dst);
   static const int B = 128;
   if (v < (1<<7)) {

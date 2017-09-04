@@ -84,6 +84,7 @@ inline size_t InternalKeyEncodingLength(const ParsedInternalKey& key) {
 }
 
 // Append the serialization of "key" to *result.
+//用于初始化InternalKey，相当于从ParsedInternalKey转换为InternalKey.
 extern void AppendInternalKey(std::string* result,
                               const ParsedInternalKey& key);
 
@@ -91,6 +92,8 @@ extern void AppendInternalKey(std::string* result,
 // stores the parsed data in "*result", and returns true.
 //
 // On error, returns false, leaves "*result" in an undefined state.
+//解析一个InternalKey，解析成功结果保存到ParsedInternalKey中，
+//相当于从InternalKey转换到ParsedInternalKey
 extern bool ParseInternalKey(const Slice& internal_key,
                              ParsedInternalKey* result);
 
@@ -141,6 +144,7 @@ class InternalFilterPolicy : public FilterPolicy {
 // Modules in this directory should keep internal keys wrapped inside
 // the following class instead of plain strings so that we do not
 // incorrectly use string comparisons instead of an InternalKeyComparator.
+//InternalKey是一个合成的Key，是用ParsedInternalKey中的数据成员字符串拼接而成的
 class InternalKey {
  private:
   std::string rep_;
@@ -178,6 +182,8 @@ inline bool ParseInternalKey(const Slice& internal_key,
   const size_t n = internal_key.size();
   if (n < 8) return false;
   uint64_t num = DecodeFixed64(internal_key.data() + n - 8);
+  //可以看出一个InternalKey的构成为user_key(string) + type(1byte) + sequence_num(7byte)
+  //左边为低位
   unsigned char c = num & 0xff;
   result->sequence = num >> 8;
   result->type = static_cast<ValueType>(c);
